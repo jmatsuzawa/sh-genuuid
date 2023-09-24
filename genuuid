@@ -1,0 +1,17 @@
+#!/bin/bash
+
+LINUX_UUID_FILE=/proc/sys/kernel/random/uuid
+
+if [[ -x $(which uuidgen 2>/dev/null) ]]; then
+  uuidgen
+elif [[ -r "${LINUX_UUID_FILE}" ]]; then
+  cat "${LINUX_UUID_FILE}"
+elif [[ -r /dev/urandom ]]; then
+  dd if=/dev/urandom bs=16 count=1 2>/dev/null \
+    | od -tx1 -An -v \
+    | tr -d ' ' \
+    | sed 's/^\(.\{8\}\)\(.\{4\}\)\(.\{4\}\)\(.\{4\}\)/\1-\2-\3-\4-/'
+else
+  echo 'Could not generate UUID.' >&2
+  exit 1
+fi
