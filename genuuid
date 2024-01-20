@@ -1,5 +1,12 @@
 #!/bin/bash
 
+UUID_VERSION=4
+UUID_VARIANT=0x8 # 10xx: DCE 1.1, ISO/IEC 11578:1996
+
+# xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+#                    ^ UUID_VARIANT (8-b)
+#               ^ UUID_VERSION
+
 LINUX_UUID_FILE=/proc/sys/kernel/random/uuid
 
 if [[ -x $(which uuidgen 2>/dev/null) ]]; then
@@ -7,10 +14,12 @@ if [[ -x $(which uuidgen 2>/dev/null) ]]; then
 elif [[ -r "${LINUX_UUID_FILE}" ]]; then
   cat "${LINUX_UUID_FILE}"
 elif [[ -r /dev/urandom ]]; then
-  dd if=/dev/urandom bs=16 count=1 2>/dev/null \
+  random_bytes=$(dd if=/dev/urandom bs=16 count=1 2>/dev/null \
     | od -tx1 -An -v \
-    | tr -d ' ' \
-    | sed 's/^\(.\{8\}\)\(.\{4\}\)\(.\{4\}\)\(.\{4\}\)/\1-\2-\3-\4-/'
+    | tr -d ' ')
+  variant_half_byte=$(printf "%x" $(( "0x${random_bytes:16:1}" & 0x3 | ${UUID_VARIANT} )))
+  echo "${random_bytes}" \
+    | sed "s/^\(.\{8\}\)\(.\{4\}\).\(.\{3\}\).\(.\{3\}\)/\1-\2-${UUID_VERSION}\3-${variant_half_byte}\3-/"
 else
   echo 'Could not generate UUID.' >&2
   exit 1
