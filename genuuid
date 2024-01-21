@@ -9,7 +9,11 @@ UUID_VARIANT=0x8 # 10xx: DCE 1.1, ISO/IEC 11578:1996
 
 LINUX_UUID_FILE=/proc/sys/kernel/random/uuid
 
-if [[ -x $(which uuidgen 2>/dev/null) ]]; then
+has_commands() {
+  type "$@" &> /dev/null
+}
+
+if has_commands uuidgen; then
   uuidgen
 elif [[ -r "${LINUX_UUID_FILE}" ]]; then
   cat "${LINUX_UUID_FILE}"
