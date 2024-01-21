@@ -13,18 +13,28 @@ has_commands() {
   type "$@" &> /dev/null
 }
 
-if has_commands uuidgen; then
-  uuidgen
-elif [[ -r "${LINUX_UUID_FILE}" ]]; then
-  cat "${LINUX_UUID_FILE}"
-elif [[ -r /dev/urandom ]]; then
-  random_bytes=$(dd if=/dev/urandom bs=16 count=1 2>/dev/null \
-    | od -tx1 -An -v \
-    | tr -d ' ')
-  variant_half_byte=$(printf "%x" $(( "0x${random_bytes:16:1}" & 0x3 | ${UUID_VARIANT} )))
-  echo "${random_bytes}" \
-    | sed "s/^\(.\{8\}\)\(.\{4\}\).\(.\{3\}\).\(.\{3\}\)/\1-\2-${UUID_VERSION}\3-${variant_half_byte}\3-/"
-else
-  echo 'Could not generate UUID.' >&2
-  exit 1
-fi
+gen_rand_hexstr() {
+  if has_commands openssl; then
+    openssl rand -hex 16
+  elif [[ -r /dev/urandom ]]; then
+    od -An -tx1 -N 16 /dev/urandom | tr -d ' '
+  else
+    echo 'Failed to generate UUID.' >&2
+    exit 1
+  fi
+}
+
+gen_uuid() {
+  if has_commands uuidgen; then
+    uuidgen
+  elif [[ -r "${LINUX_UUID_FILE}" ]]; then
+    cat "${LINUX_UUID_FILE}"
+  else
+    rand=$(gen_rand_hexstr)
+    variant_half_byte=$(printf "%x" $(( "0x${rand:16:1}" & 0x3 | ${UUID_VARIANT} )))
+    echo "${rand}" \
+      | sed "s/^\(.\{8\}\)\(.\{4\}\).\(.\{3\}\).\(.\{3\}\)/\1-\2-${UUID_VERSION}\3-${variant_half_byte}\3-/"
+  fi
+}
+
+gen_uuid
