@@ -35,4 +35,4 @@ gen_uuid() {
   fi
 }
 
-gen_uuid
+gen_uuid | tr 'A-F' 'a-f'
