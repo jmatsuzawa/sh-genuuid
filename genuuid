@@ -7,8 +7,6 @@ UUID_VARIANT=0x8 # 10xx: DCE 1.1, ISO/IEC 11578:1996
 #                    ^ UUID_VARIANT (8-b)
 #               ^ UUID_VERSION
 
-LINUX_UUID_FILE=/proc/sys/kernel/random/uuid
-
 has_commands() {
   type "$@" &> /dev/null
 }
@@ -27,8 +25,8 @@ gen_rand_hexstr() {
 gen_uuid() {
   if has_commands uuidgen; then
     uuidgen
-  elif [[ -r "${LINUX_UUID_FILE}" ]]; then
-    cat "${LINUX_UUID_FILE}"
+  elif [[ -r /proc/sys/kernel/random/uuid ]]; then
+    cat /proc/sys/kernel/random/uuid
   else
     rand=$(gen_rand_hexstr)
     variant_half_byte=$(printf "%x" $(( "0x${rand:16:1}" & 0x3 | ${UUID_VARIANT} )))
