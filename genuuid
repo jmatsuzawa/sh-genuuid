@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 UUID_VERSION=4
 UUID_VARIANT=0x8 # 10xx: DCE 1.1, ISO/IEC 11578:1996
